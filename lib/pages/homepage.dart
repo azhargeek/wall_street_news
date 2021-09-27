@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:news_demo_livestream/models/newsInfo.dart';
-import 'package:news_demo_livestream/services/api_manager.dart';
+import 'package:news_demo_livestream/news_bloc.dart';
 import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
@@ -9,12 +9,20 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Future<NewsModel> _newsModel;
+  final newsBloc = NewsBlock();
 
   @override
   void initState() {
-    _newsModel = API_Manager().getNews();
+    newsBloc.eventSink.add(NewsAction.Fetch);
     super.initState();
+  }
+
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    newsBloc.dispose();
   }
 
   @override
@@ -24,14 +32,14 @@ class _HomePageState extends State<HomePage> {
         title: Text('News App'),
       ),
       body: Container(
-        child: FutureBuilder<NewsModel>(
-          future: _newsModel,
+        child: StreamBuilder<List<Article>>(
+          stream : newsBloc.newsStream,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return ListView.builder(
-                  itemCount: snapshot.data.articles.length,
+                  itemCount: snapshot.data.length,
                   itemBuilder: (context, index) {
-                    var article = snapshot.data.articles[index];
+                    var article = snapshot.data[index];
                     var formattedTime = DateFormat('dd MMM - HH:mm')
                         .format(article.publishedAt);
                     return Container(
